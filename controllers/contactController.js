@@ -35,8 +35,12 @@ const createContact = asyncHandler( async (req, res) => {
 // @route GET /api/contacts/:id
 // @access Public
 const getContact = asyncHandler(async (req, res) => {
-
-    res.status(200).json({message: `Get contact with id ${req.params.id}`});
+    const contact = await Contact.findById(req.params.id);
+    if (!contact) {
+        res.status(404);
+        throw new Error('Contact not found');
+    }
+    res.status(200).json(contact);
 }
 )
 
@@ -44,16 +48,35 @@ const getContact = asyncHandler(async (req, res) => {
 // @route PUT /api/contacts/:id
 // @access Public
 const updateContact = asyncHandler(async (req, res) => {
-    res.status(200).json({message: `Update contact with id ${req.params.id}`});
+    const contact = await Contact.findById(req.params.id);
+    if(!contact) {
+        res.status(404);
+        throw new Error('Contact not found');
+    }
+    const {name, email, phone} = req.body;
+    const updatedContact = await Contact.findByIdAndUpdate(req.params.id, {
+        name,
+        email,
+        phone
+    }, {new: true}); // {new: true} is used to return the updated document instead of the original document
+    res.status(200).json(updateContact);
 }
 )
 
 // @desc Delete contact by id
 // @route DELETE /api/contacts/:id
 // @access Public
-const deleteContact =asyncHandler( async (req, res) => {
-    res.status(200).json({message: `Delete contact with id ${req.params.id}`});
-}
-)
+const deleteContact = asyncHandler(async (req, res) => {
+    console.log(`Attempting to delete contact with ID: ${req.params.id}`);
+    const contact = await Contact.findById(req.params.id);
+    console.log(`Contact found: ${contact}`);
+    if (!contact) {
+        res.status(404);
+        throw new Error('Contact not found');
+    }
+
+    await Contact.findByIdAndDelete(req.params.id);
+    res.status(200).json({ message: 'Contact removed', contact });
+});
 
 module.exports = {getContacts, createContact, getContact, updateContact, deleteContact};
